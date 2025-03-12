@@ -20,7 +20,10 @@ const ProtectedRoute = ({ children, requiredRoles = [] }: ProtectedRouteProps) =
         const { authenticated, user } = await isLoggedIn();
 
         if (authenticated) {
-          if (requiredRoles.length === 0 || requiredRoles.includes(user?.role)) {
+          if (
+            requiredRoles.length === 0 ||
+            (user?.role && requiredRoles.includes(user.role))
+          ) {
             setHasAccess(true);
           } else {
             router.push("/auth/login");

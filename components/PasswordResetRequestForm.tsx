@@ -9,6 +9,7 @@ const PasswordResetRequestForm = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -28,10 +29,13 @@ const PasswordResetRequestForm = () => {
     setError("");
 
     try {
+      setIsLoading(true)
       await apiClient.post("/request-reset-password", { email });
       setMessage("Password reset link sent. Check your inbox.");
+      setIsLoading(false)
       setCooldown(60); // 60-second cooldown
     } catch (err) {
+      setIsLoading(false)
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || "Failed to send a reset link.");
       } else {
@@ -52,8 +56,8 @@ const PasswordResetRequestForm = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <Button type="submit" disabled={cooldown > 0}>
-          {cooldown > 0 ? `Wait ${cooldown}s` : "Send Reset Link"}
+        <Button type="submit" disabled={cooldown > 0 || isLoading}>
+          {isLoading ? `Loading...` : cooldown > 0 ? `Wait ${cooldown}s` : "Send Reset Link"}
         </Button>
       </form>
       {message && <p className="text-green-500 text-sm mt-2">{message}</p>}
