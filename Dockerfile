@@ -1,24 +1,47 @@
 # Stage 1: Build the Next.js app
-FROM node:18-alpine AS builder
+FROM node:20-slim AS base
 
-WORKDIR /usr/src/app
+FROM base AS builder
 
-# Install dependencies
-COPY package*.json ./
-RUN npm install
+WORKDIR /app
 
-# Copy source and build the app
+COPY package.json package-lock.json* ./
+RUN npm ci
 COPY . .
+
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
 RUN npm run build
 
-# Stage 2: Run the app in production mode
-FROM node:16-alpine AS runner
 
-WORKDIR /usr/src/app
-COPY --from=builder /usr/src/app ./
 
-# Expose the frontend port
-EXPOSE 3006
+# Stage 2 - Runner
+FROM base AS runner
+WORKDIR /app
 
-# Start the application
-CMD ["npm", "start"]
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+ENV PORT=3000
+
+EXPOSE 3000
+
+# Cloudflare Tunnels necessary arguments
+ARG HOSTNAME
+
+CMD node server.js

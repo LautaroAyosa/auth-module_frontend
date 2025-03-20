@@ -1,38 +1,42 @@
 import { useState } from "react";
-import axios from "axios";
-import Button from "./Button";
-import FormInput from "./FormInput";
-import apiClient from "@/utils/axiosInstance";
-import Link from "next/link";
+import Button from "../ui/Button";
+import FormInput from "../ui/FormInput";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+import { resetPassword } from "@/utils/auth";
 
 export default function PasswordResetForm({ token }: { token: string }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter()
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
-
 
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
       return;
     }
 
     try {
-      await apiClient.post("/reset-password", { token, newPassword });
-      setMessage("Password reset successful. You can now log in.");
+      const resetPasswordPromise = resetPassword(token, newPassword);
+      await toast.promise(
+        resetPasswordPromise, 
+        {
+          pending: "Resetting password...",
+          success: "Password reset successfuly",
+          error: "Failed to reset password."
+        }
+      );
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to reset password.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
+      router.push('/auth/login')
+    } finally {
+
     }
   };
 
@@ -66,9 +70,8 @@ export default function PasswordResetForm({ token }: { token: string }) {
       ) : null}
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      {message && <p className="text-green-500 text-sm">{message}</p>}
 
-      {message ? <Link className="btn-primary mt-4 flex justify-center" href="/auth/login">Go to log in page</Link> : <Button type="submit">Reset Password</Button> }
+      <Button type="submit">Reset Password</Button>
       
     </form>
   );

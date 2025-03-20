@@ -1,14 +1,22 @@
 // pages/auth/forgot-password.tsx
-import PasswordResetRequestForm from "@/components/PasswordResetRequestForm";
-import Layout from "./layout";
+import PasswordResetRequestForm from "@/components/auth/PasswordResetRequestForm";
+import Link from "next/link";
+import AuthLayout from "../../components/layout/AuthLayout";
+import Layout from "../../components/layout/MainLayout";
 
-const ForgotPassword = () => {
+function ForgotPassword () {
   return (
-    <Layout>
+    <>
       <h2 className="text-3xl font-bold text-center mb-6 text-gray-700">Forgot Password</h2>
       <PasswordResetRequestForm />
-    </Layout>
+      <div className="mt-4 flex justify-between text-sm text-blue-600">
+        <Link className="hover:text-blue-500 hover:underline text-start" href="/auth/login">Remembered your <br></br> Password? Login</Link>
+        <Link className="hover:text-blue-500 hover:underline text-end" href="/auth/register">Don&apos;t have an account? <br></br> Register</Link>
+      </div>
+    </>
   );
 };
+
+ForgotPassword.getLayout = (page:React.ReactNode) => <Layout><AuthLayout>{page}</AuthLayout></Layout>
 
 export default ForgotPassword;
