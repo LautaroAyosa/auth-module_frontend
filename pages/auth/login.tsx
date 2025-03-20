@@ -1,40 +1,42 @@
-import { useState } from "react";
-import axios from "axios";
+import { useContext, useState } from "react";
 import { useRouter } from "next/router";
-import FormInput from "@/components/FormInput";
-import Button from "@/components/Button";
-import AuthError from "@/components/AuthError";
+import FormInput from "@/components/ui/FormInput";
+import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { login } from "@/utils/auth";
-import Layout from "./layout";
+import Layout from "../../components/layout/MainLayout";
+import AuthLayout from "../../components/layout/AuthLayout";
+import { AuthContext } from "../_app";
+import { toast } from "react-toastify";
 
-export default function Login() {
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {setAuth} = useContext(AuthContext);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    try {
-      const {mfaRequired, tempSessionId} = await login(email, password);
-      
-      if (mfaRequired) {
-        router.push(`/auth/${tempSessionId}`)
-      } else {
-        router.push('/')
-      }
 
-    } catch (err) {
-      if (axios.isAxiosError(err))
-        setError(err.response?.data?.message || "Login Failed.");
-      else setError("An unexpected error occurred.");
+    const loginPromise = login(email, password, setAuth);      
+    const {mfaRequired, tempSessionId, message} = await toast.promise(
+      loginPromise, 
+      {
+        pending: "Logging in...",
+        success: "Logged in successfully",
+        error: "Failed to log in"
+      }
+    );
+    
+    if (mfaRequired) {
+      router.push(`/auth/${tempSessionId}`)
+    } else if (message) {
+      router.push('/')
     }
   };
 
   return (
-    <Layout>
+    <>
       <h1 className="text-3xl font-bold text-center mb-6 text-gray-700">
         Sign In
       </h1>
@@ -56,7 +58,6 @@ export default function Login() {
           placeholder="●●●●●●●●"
           description="Must be at least 8 characters long."
         />
-        <AuthError message={error} />
         <Button type="submit">
           Login
         </Button>
@@ -65,6 +66,10 @@ export default function Login() {
         <Link className="hover:text-blue-500 hover:underline" href="/auth/register">Don&apos;t have an account? <br></br> Register</Link>
         <Link className="hover:text-blue-500 hover:underline text-end" href="/auth/forgot-password">Forgot <br></br> Password?</Link>
       </div>
-    </Layout>
+    </>
   );
 }
+
+Login.getLayout = (page:React.ReactNode) => <Layout><AuthLayout>{page}</AuthLayout></Layout>
+
+export default Login;

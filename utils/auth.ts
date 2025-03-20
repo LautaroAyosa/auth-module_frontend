@@ -1,83 +1,200 @@
 import apiClient from "./axiosInstance";
+import { AuthState, User } from "@/pages/_app";
 
-// Store the access token in memory
-let accessToken: string | null = null;
 
-export async function isLoggedIn(): Promise<{ authenticated: boolean; user?: { id: string; name: string; email: string; role: string; mfaEnabled: boolean } }> {
+export async function isLoggedIn(
+  setAuth?: (newState: AuthState) => void,
+): Promise<{ authenticated: boolean; user: User | null }> {
   try {
-      const response = await apiClient.get('/validate-session')
-      return response.data; // { authenticated: true, user: { id, name, email, role, mfaEnabled } }
-      // eslint-disable-next-line
-  } catch (error: any) {
-    if (error.response?.status === 401) {
-      return { authenticated: false };
-    }
-    console.error('Unexpected error checking session:', error.response?.data || error);
-    return {authenticated: false};
-  }
-}
+    const response = await apiClient.get('/validate-session');
+    const authData = { authenticated: true, user: response.data.user };
 
-// Login function
-export async function login(email: string, password: string): Promise<{ mfaRequired?: boolean; tempSessionId?: string }> {
-  try {
-      const { data } = await apiClient.post('/login', { email, password });
-      if (data.mfaRequired) {
-          return { mfaRequired: true, tempSessionId: data.tempSessionId };
-      }
-      return { mfaRequired: false };
-  } catch (error: any) {
-      console.error('Login failed:', error.response?.data || error);
-      throw error;
-  }
-}
+    // Update Context
+    if (setAuth) setAuth(authData); 
 
-export async function enableMFA():Promise<{message?:string, qrCode?:string, recoveryCode?:string}> {
-  try {
-    const {data} = await apiClient.post('/enable-mfa'); // {message: 'MFA enabled', qrCode, recoveryCode}
-    return { message: data.message, qrCode: data.qrCode, recoveryCode: data.recoveryCode };
+    return authData;
   } catch (err) {
-    console.log(err)
-    return {message: 'Failed Enabling MFA'}
-  }
-}
+    console.error('Unexpected error checking session:', err);
 
-// MFA Verification function
-export async function verifyMFA(tempSessionId: string, token: string): Promise<void> {
-  try {
-    await apiClient.post('/verify-mfa', { tempSessionId, token });
-
-  } catch (error: any) {
-      console.error('MFA verification failed:', error.response?.data || error);
-      throw error;
-  }
-}
-
-export async function recoverMFA (email:string, recoveryCode:string): Promise<void> {
-  try {
-    await apiClient.post('/recover-mfa', {email, recoveryCode})
-  } catch (err) {
+    const authData = { authenticated: false, user: null };
+    if (setAuth) setAuth(authData);
+    
     throw err;
   }
 }
 
-// Logout function
-export async function logout(): Promise<void> {
+export async function register(
+  name: string, 
+  email:string, 
+  password:string,
+): Promise<{message?:string}> {
   try {
-      await apiClient.post('/logout', {});
-      accessToken = null; // Clear access token from memory
-      console.log('Logged out successfully');
-  } catch (error: any) {
-      console.error('Logout failed:', error.response?.data || error);
+    const res = await apiClient.post('/register', {name, email, password});
+    return {message: res.data.message}
+  } catch (err) {
+    console.error("Error registering:", err)
+    throw err;
   }
 }
 
-// Example usage for API request
-export async function getProtectedResource<T>(): Promise<T> {
+
+// Login function
+export async function login(
+  email: string, 
+  password: string, 
+  setAuth?: (newState: AuthState) => void,
+): Promise<{ mfaRequired?: boolean; tempSessionId?: string, message?:string, error?:string }> {
   try {
-      const { data } = await apiClient.get<T>('/protected');
-      return data;
-  } catch (error: any) {
-      console.error('Error fetching protected resource:', error.response?.data || error);
-      throw error;
+    const res = await apiClient.post('/login', { email, password });
+    if (res?.data?.mfaRequired) {
+      return { mfaRequired: true, tempSessionId: res?.data?.tempSessionId };
+    }
+
+    const sessionData = await isLoggedIn();
+    
+    if (setAuth) setAuth(sessionData);
+
+    return { mfaRequired: false, message: 'Login successful' };
+  } catch (err) {
+    console.error("Error logging in:", err)
+    throw err;
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<{message:string}> {
+  try {
+    const res = await apiClient.post('/request-reset-password', { email });
+    return { message: res.data.message };
+  } catch (err) {
+    console.error("Error requesting password reset:", err)
+    throw err;
+  }
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{message:string}> {
+  try {
+    const res = await apiClient.post('/reset-password', { token, newPassword });
+    return { message: res.data.message };
+  } catch (err) {
+    console.error("Error resetting password:", err)
+    throw err;
+  }
+}
+
+
+export async function updateUser(
+  name?: string,
+  email?: string,
+  password?: string,
+  confirmPassword?: string,
+  setAuth?: (newState: AuthState | ((prev: AuthState) => AuthState)) => void,
+): Promise<{ message: string }> {
+  try {
+    const res = await apiClient.put('/update-user', {name, email, password, confirmPassword});
+
+    if (setAuth) {
+      setAuth((prevAuth) => ({
+        ...prevAuth,
+        user: prevAuth.user
+          ? { ...prevAuth.user, ...res.data.user }
+          : null,
+      }));
+    }
+    return res.data.message;
+  } catch (err) {
+    console.error("Error updating user:", err)
+    throw err
+  }
+}
+
+export async function updateEmail(
+  token:string, 
+  setAuth?: (newState: AuthState | ((prev: AuthState) => AuthState)) => void,
+): Promise<{message: string}> {
+  try {
+    const res = await apiClient.put(`/update-email/${token}`);
+
+    if (setAuth) {
+      setAuth((prevAuth) => ({
+        ...prevAuth,
+        user: prevAuth.user
+          ? { ...prevAuth.user, email: res.data.email ?? prevAuth.user.email }
+          : null,
+      }));
+    }
+
+    return res.data.message;
+  } catch (err) {
+    console.error("Error updating user:", err)
+    throw err
+  }
+}
+
+export async function enableMFA(
+  setAuth?: (newState: AuthState | ((prev: AuthState) => AuthState)) => void,
+):Promise<{message?:string, qrCode?:string, recoveryCode?:string}> {
+  try {
+    const {data} = await apiClient.post('/enable-mfa'); // {message: 'MFA enabled', qrCode, recoveryCode}
+    if (setAuth) {
+      setAuth((prevAuth) => ({
+        ...prevAuth,
+        user: prevAuth.user ? { ...prevAuth.user, mfaEnabled: true } : null,
+      }));
+    }
+    return { message: data.message, qrCode: data.qrCode, recoveryCode: data.recoveryCode };
+  } catch (err) {
+    console.error("Error enabling MFA:", err)
+    throw err
+  }
+}
+
+// MFA Verification function
+export async function verifyMFA(
+  tempSessionId: string, 
+  token: string, 
+  setAuth?: (newState: AuthState) => void,
+): Promise<{message?:string}> {
+  try {
+    const res = await apiClient.post('/verify-mfa', { tempSessionId, token });
+    if (setAuth) setAuth(res.data)
+    return { message: res.data.message };
+  } catch (err) {
+    console.error("Error verifying MFA:", err)
+    throw err
+  }
+}
+
+export async function recoverMFA (
+  email:string, 
+  recoveryCode:string, 
+  setAuth?: (newState: AuthState | ((prev: AuthState) => AuthState)) => void,
+): Promise<{message?:string}> {
+  try {
+    const res = await apiClient.post('/recover-mfa', {email, recoveryCode})
+    if (setAuth) {
+      setAuth((prevAuth) => ({
+        ...prevAuth,
+        user: prevAuth.user ? { ...prevAuth.user, mfaEnabled: false } : null,
+      }));
+    }
+
+    return {message: res.data.message}
+  } catch (err) {
+    console.error("Error recovering MFA:", err)
+    throw err
+  }
+}
+
+// Logout function
+export async function logout(
+  setAuth?: (newState: AuthState) => void,
+): Promise<{message?:string}> {
+  try {
+    const res = await apiClient.post('/logout', {});
+    if(setAuth) setAuth({authenticated: false, user: null})
+    return {message: res.data.message}  
+  } catch (err) {
+    console.error("Error logging out:", err)
+    throw err
   }
 }

@@ -1,45 +1,52 @@
 import { useState } from "react";
-import axios from "axios";
-import Button from "./Button";
-import FormInput from "./FormInput";
+import Button from "../ui/Button";
+import FormInput from "../ui/FormInput";
 import { recoverMFA } from "@/utils/auth";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 export default function RecoverMFAForm() {
   const [email, setEmail] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const router = useRouter()
 
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
     setError("");
 
     if (!email) {
       setError("Please enter your email.");
+      setTimeout(() => {
+        setError("");
+      }, 3000);
       return;
     }
 
     if (!recoveryCode) {
         setError("Please enter your recovery Code")
+        setTimeout(() => {
+          setError("");
+        }, 3000);
         return
     }
 
     try {
-        await recoverMFA( email, recoveryCode );
-        setMessage("Your account has been successfully recovered. Redirecting...");
-        setEmail("");
-        setRecoveryCode("");
-        // Redirect
-        router.push('/auth/login')
-    } catch (err) {
-        if (axios.isAxiosError(err)) {
-            setError(err.response?.data?.message || "Failed to recover account.");
-        } else {
-            setError("An unexpected error occurred.");
+      const recoverMFAPromise = recoverMFA( email, recoveryCode );
+      await toast.promise(
+        recoverMFAPromise, {
+          pending: "Recovering account...",
+          success: "Account recovered successfully.",
+          error: "Failed to recover"
         }
+      )
+      setEmail("");
+      setRecoveryCode("");
+      // Redirect
+      router.push('/auth/login')
+    } finally {
+      setEmail("");
+      setRecoveryCode("");
     }
   };
 
@@ -63,7 +70,6 @@ export default function RecoverMFAForm() {
       />
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      {message && <p className="text-green-500 text-sm">{message}</p>}
 
       <Button type="submit">Recover</Button>
     </form>

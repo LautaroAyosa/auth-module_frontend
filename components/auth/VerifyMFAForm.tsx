@@ -1,38 +1,39 @@
-import { useState } from "react";
-import axios from "axios";
-import Button from "./Button";
-import FormInput from "./FormInput";
+import { useContext, useState } from "react";
+import Button from "../ui/Button";
+import FormInput from "../ui/FormInput";
 import { verifyMFA } from "@/utils/auth";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
+import { AuthContext } from "@/pages/_app";
 
 export default function VerifyMFAForm({ tempSessionId }: { tempSessionId: string }) {
   const [token, setToken] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const {setAuth} = useContext(AuthContext)
   const router = useRouter()
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
 
     if (!token) {
-      setError("Please enter the MFA code.");
+      toast.warning("Please enter the MFA code.")
       return;
     }
 
     try {
-      await verifyMFA( tempSessionId, token );
-      setMessage("MFA verification successful. Redirecting...");
+      const verifyMFAPromise = verifyMFA( tempSessionId, token, setAuth );
+      await toast.promise(
+        verifyMFAPromise,
+        {
+          pending: "Verifying MFA...",
+          success: "MFA verification successful.",
+          error: "Failed to verify MFA."
+        }
+      )
       setToken("");
       // Redirect
       router.push('/')
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to verify MFA.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
+    } finally {
+      setToken("");
     }
   };
 
@@ -47,9 +48,6 @@ export default function VerifyMFAForm({ tempSessionId }: { tempSessionId: string
         onChange={(e) => setToken(e.target.value)}
         required
       />
-
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {message && <p className="text-green-500 text-sm">{message}</p>}
 
       <Button type="submit">Verify</Button>
     </form>

@@ -7,7 +7,7 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
@@ -17,14 +17,28 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-2 bg-blue-600 rounded hover:bg-blue-500 transition duration-150;
+    @apply px-6 py-2 bg-blue-600 rounded hover:bg-blue-500 transition duration-150 text-white;
   }
   .btn-danger {
     @apply btn-primary bg-red-700 hover:bg-red-600;
   }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) translateX(10px) rotate(10deg); }
+  100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+}
+
+.animate-float {
+  animation: float infinite ease-in-out alternate;
+}
+
+#confirm-dialog {
+  margin-top: 0px !important;
 }

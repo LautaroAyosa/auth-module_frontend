@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import Button from "./Button";
-import FormInput from "./FormInput";
-import apiClient from "@/utils/axiosInstance";
+import Button from "../ui/Button";
+import FormInput from "../ui/FormInput";
+import { toast } from "react-toastify";
+import { requestPasswordReset } from "@/utils/auth";
 
 const PasswordResetRequestForm = () => {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,22 +23,22 @@ const PasswordResetRequestForm = () => {
     e.preventDefault();
     if (cooldown > 0) return;
 
-    setMessage("");
-    setError("");
-
     try {
       setIsLoading(true)
-      await apiClient.post("/request-reset-password", { email });
-      setMessage("Password reset link sent. Check your inbox.");
-      setIsLoading(false)
+      
+      const requestPasswordResetPromise = requestPasswordReset(email);
+      await toast.promise(
+        requestPasswordResetPromise, 
+        {
+          pending: "Sending reset link...",
+          success: "Password reset link sent. Check your inbox.",
+          error: "Failed to send reset link"
+        }
+      );
+      toast.success("Password reset link sent. Check your inbox.")
       setCooldown(60); // 60-second cooldown
-    } catch (err) {
+    } finally {
       setIsLoading(false)
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Failed to send a reset link.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
     }
   };
 
@@ -60,8 +58,6 @@ const PasswordResetRequestForm = () => {
           {isLoading ? `Loading...` : cooldown > 0 ? `Wait ${cooldown}s` : "Send Reset Link"}
         </Button>
       </form>
-      {message && <p className="text-green-500 text-sm mt-2">{message}</p>}
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
     </div>
   );
 };

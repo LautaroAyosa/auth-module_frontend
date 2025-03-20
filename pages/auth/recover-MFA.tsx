@@ -1,11 +1,17 @@
-import RecoverMFAForm from "@/components/RecoverMFAForm";
-import Layout from "./layout";
+import RecoverMFAForm from "@/components/auth/RecoverMFAForm";
+import AuthLayout from "../../components/layout/AuthLayout";
+import Layout from "../../components/layout/MainLayout";
 
-export default function RecoverMFA () {
+function RecoverMFA () {
     return (
-      <Layout>
+      <>
         <h2 className="text-3xl font-bold text-center mb-6 text-gray-700">Recover account</h2>
         <RecoverMFAForm/>
-      </Layout>
+      </>
     );
 };
+
+RecoverMFA.getLayout = (page:React.ReactNode) => <Layout><AuthLayout>{page}</AuthLayout></Layout>
+
+
+export default RecoverMFA;

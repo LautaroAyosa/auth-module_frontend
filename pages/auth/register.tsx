@@ -1,14 +1,16 @@
 // pages/auth/register.tsx
 import { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/router";
-import FormInput from "@/components/FormInput";
-import Button from "@/components/Button";
-import AuthError from "@/components/AuthError";
+import FormInput from "@/components/ui/FormInput";
+import Button from "@/components/ui/Button";
+import AuthError from "@/components/auth/AuthError";
 import Link from "next/link";
-import Layout from "./layout";
+import AuthLayout from "../../components/layout/AuthLayout";
+import Layout from "../../components/layout/MainLayout";
+import { register } from "@/utils/auth";
+import { toast } from "react-toastify";
 
-const Register = () => {
+function Register () {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,28 +20,24 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    try {
-      const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`,
-        { name, email, password },
-        { withCredentials: true }
-      );
-      router.push("/dashboard");
-      console.log(data)
-    } catch (err) {
-        if (axios.isAxiosError(err)) {
-          // If the error is an AxiosError, access the response property safely
-          setError(err.response?.data?.message || "Registration Failed.");
-        } else {
-          // Handle unexpected errors
-          setError("An unexpected error occurred.");
-        }
+
+    const registerPromise = register(name, email, password);
+
+    await toast.promise(
+      registerPromise, 
+      {
+        pending: "Registering...",
+        success: "Registered successfully. Please log in.",
+        error: "Failed to Register"
       }
-    
+    );
+
+    router.push("/auth/login");
+
   };
 
   return (
-    <Layout>
+    <>
       <h2 className="text-3xl font-bold text-center mb-6 text-gray-700">Register</h2>
       <form onSubmit={handleRegister}>
         <FormInput
@@ -74,8 +72,10 @@ const Register = () => {
         <Link className="hover:text-blue-500 hover:underline" href="/auth/login">Already have an account? <br></br> Log In</Link>
         <Link className="hover:text-blue-500 hover:underline text-end" href="/auth/forgot-password">Forgot <br></br> Password?</Link>
       </div>
-    </Layout>
+    </>
   );
 };
+
+Register.getLayout = (page:React.ReactNode) => <Layout><AuthLayout>{page}</AuthLayout></Layout>
 
 export default Register;
