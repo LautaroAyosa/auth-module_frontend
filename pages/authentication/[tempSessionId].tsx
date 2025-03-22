@@ -1,6 +1,6 @@
 // pages/auth/[tempSessionId].tsx
 import { useRouter } from "next/router";
-import VerifyMFAForm from "@/components/auth/VerifyMFAForm";
+import VerifyMFAForm from "@/components/authentication/VerifyMFAForm";
 import Link from "next/link";
 import AuthLayout from "../../components/layout/AuthLayout";
 import Layout from "../../components/layout/MainLayout";

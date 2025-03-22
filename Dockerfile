@@ -1,47 +1,30 @@
-# Stage 1: Build the Next.js app
-FROM node:20-slim AS base
-
-FROM base AS builder
-
+# --- Stage 1: Build ---
+FROM node:20-slim AS builder
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package*.json ./
 RUN npm ci
 COPY . .
 
-
+# Pass the API URL at build time
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
 
 RUN npm run build
 
-
-
-# Stage 2 - Runner
-FROM base AS runner
+# --- Stage 2: Runtime ---
+FROM node:20-slim AS runner
 WORKDIR /app
 
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+RUN mkdir .next && chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-
-ENV PORT=3000
-
 EXPOSE 3000
-
-# Cloudflare Tunnels necessary arguments
-ARG HOSTNAME
-
-CMD node server.js
+CMD ["node", "server.js"]

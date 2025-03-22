@@ -77,13 +77,13 @@ const Navbar = () => {
             // Login Button (if not authenticated)
             <div className="space-x-3">
               <button
-                onClick={() => router.push("/auth/login")}
+                onClick={() => router.push("/authentication/login")}
                 className="px-5 py-2 text-white font-medium  bg-blue-600 rounded hover:bg-blue-700 transition"
               >
                 Login
               </button>
               <button
-                onClick={() => router.push("/auth/register")}
+                onClick={() => router.push("/authentication/register")}
                 className="px-5 py-2 text-blue-600 hover:text-white font-medium bg-white rounded hover:bg-blue-700 transition"
               >
                 Register
@@ -154,13 +154,13 @@ const Navbar = () => {
             ) : (
               <>
                 <button
-                  onClick={() => {router.push("/auth/login"); setMenuOpen(false)}}
+                  onClick={() => {router.push("/authentication/login"); setMenuOpen(false)}}
                   className="block w-full px-5 py-2 text-white font-medium bg-blue-600 rounded-sm hover:bg-blue-700 transition"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => {router.push("/auth/register"); setMenuOpen(false)}}
+                  onClick={() => {router.push("/authentication/register"); setMenuOpen(false)}}
                   className="block w-full px-5 py-2 text-white font-medium bg-blue-600 rounded hover:bg-blue-700 transition"
                 >
                   Register

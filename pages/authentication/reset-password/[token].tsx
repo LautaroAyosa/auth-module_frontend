@@ -1,6 +1,6 @@
 // pages/auth/reset-password.tsx
 import { useRouter } from "next/router";
-import PasswordResetForm from "@/components/auth/PasswordResetForm";
+import PasswordResetForm from "@/components/authentication/PasswordResetForm";
 import AuthLayout from "../../../components/layout/AuthLayout";
 import Layout from "../../../components/layout/MainLayout";
 
