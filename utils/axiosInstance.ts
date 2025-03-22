@@ -1,5 +1,8 @@
-// utils/axiosInstance.ts
 import axios from "axios";
+import getConfig from 'next/config';
+const { publicRuntimeConfig } = getConfig();
+
+const { API_BASE_URL } = publicRuntimeConfig
 
 // Store the access token in memory
 let accessToken: string | null = null;
@@ -26,9 +29,8 @@ function addRefreshSubscriber(callback: () => void): void {
   refreshSubscribers.push(callback);
 }
 
-
 const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth`,
+  baseURL: `${API_BASE_URL}/auth`,
   withCredentials: true, // Ensure cookies are included in requests
 });
 

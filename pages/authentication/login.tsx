@@ -63,8 +63,8 @@ function Login() {
         </Button>
       </form>
       <div className="mt-4 flex justify-between text-sm text-blue-600">
-        <Link className="hover:text-blue-500 hover:underline" href="/auth/register">Don&apos;t have an account? <br></br> Register</Link>
-        <Link className="hover:text-blue-500 hover:underline text-end" href="/auth/forgot-password">Forgot <br></br> Password?</Link>
+        <Link className="hover:text-blue-500 hover:underline" href="/authentication/register">Don&apos;t have an account? <br></br> Register</Link>
+        <Link className="hover:text-blue-500 hover:underline text-end" href="/authentication/forgot-password">Forgot <br></br> Password?</Link>
       </div>
     </>
   );

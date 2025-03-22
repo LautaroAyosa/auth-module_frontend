@@ -5,7 +5,6 @@ import MainLayout from "@/components/layout/MainLayout";
 const Home = () => {
   const router = useRouter();
   const [floatingObjects, setFloatingObjects] = useState<{ x: number; y: number; size: number; speed: number }[]>([]);
-
     // Generate floating objects with constraints
     useEffect(() => {
       const objects = Array.from({ length: 6 }).map(() => ({

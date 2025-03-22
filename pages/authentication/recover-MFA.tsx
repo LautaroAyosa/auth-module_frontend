@@ -1,4 +1,4 @@
-import RecoverMFAForm from "@/components/auth/RecoverMFAForm";
+import RecoverMFAForm from "@/components/authentication/RecoverMFAForm";
 import AuthLayout from "../../components/layout/AuthLayout";
 import Layout from "../../components/layout/MainLayout";
 

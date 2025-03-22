@@ -1,16 +1,11 @@
-FROM node:18-alpine
+FROM node:20-alpine as builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
+COPY package.json .
+
 RUN npm install
 
-# Copy app source
 COPY . .
 
-# Expose the frontend port
-EXPOSE 3006
-
-# Run in development mode (Next.js has built-in hot reloading)
 CMD ["npm", "run", "dev"]
